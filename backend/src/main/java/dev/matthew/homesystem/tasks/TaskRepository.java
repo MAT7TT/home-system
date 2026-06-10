@@ -87,7 +87,15 @@ public class TaskRepository {
                            scheduled_start, scheduled_end, due_at, completed_at,
                            skipped_at, skip_reason, created_at, updated_at
                     FROM tasks
-                    WHERE status = 'active'
+                        WHERE status = 'active'
+                          AND (
+                              planned_date IS NULL
+                              OR planned_date != date('now')
+                          )
+                          AND (
+                              scheduled_start IS NULL
+                              OR date(scheduled_start) != date('now')
+                          )
                     ORDER BY
                         planned_date IS NULL,
                         planned_date,
