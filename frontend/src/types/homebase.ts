@@ -52,3 +52,17 @@ export interface CreateTaskRequest {
   scheduledEnd?: string | null
   dueAt?: string | null
 }
+
+export interface UpdateTaskRequest {
+  title: string
+  notes?: string | null
+  categoryId?: number | null
+  plannedDate?: string | null
+  scheduledStart?: string | null
+  scheduledEnd?: string | null
+  dueAt?: string | null
+}
+
+export interface SkipTaskRequest {
+  reason?: string | null
+}

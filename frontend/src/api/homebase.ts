@@ -1,4 +1,4 @@
-import type { CreateTaskRequest, Routine, RoutineProgress, Task } from '@/types/homebase'
+import type { CreateTaskRequest, Routine, RoutineProgress, SkipTaskRequest, Task, UpdateTaskRequest } from '@/types/homebase'
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -24,10 +24,28 @@ export function getActiveTasks(): Promise<Task[]> {
   return request<Task[]>('/api/v1/tasks/active')
 }
 
+export function getTasks(): Promise<Task[]> {
+  return request<Task[]>('/api/v1/tasks')
+}
+
 export function createTask(task: CreateTaskRequest): Promise<Task> {
   return request<Task>('/api/v1/tasks', {
     method: 'POST',
     body: JSON.stringify(task),
+  })
+}
+
+export function updateTask(id: number, task: UpdateTaskRequest): Promise<Task> {
+  return request<Task>(`/api/v1/tasks/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(task),
+  })
+}
+
+export function skipTask(id: number, payload: SkipTaskRequest): Promise<Task> {
+  return request<Task>(`/api/v1/tasks/${id}/skip`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
   })
 }
 

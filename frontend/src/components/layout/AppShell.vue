@@ -2,7 +2,8 @@
 import { RouterLink } from 'vue-router'
 
 const navigationItems = [
-  { label: 'Today', to: '/' },
+  { label: 'Dashboard', to: '/' },
+  { label: 'Calendar', to: '/calendar' },
   { label: 'Tasks', to: '/tasks' },
   { label: 'Routines', to: '/routines' },
   { label: 'Settings', to: '/settings' },

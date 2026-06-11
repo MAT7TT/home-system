@@ -1,6 +1,7 @@
 package dev.matthew.homesystem.tasks;
 
 import dev.matthew.homesystem.routines.Routine;
+import dev.matthew.homesystem.tags.Tag;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -128,11 +129,8 @@ public class TaskRepository {
                            scheduled_start, scheduled_end, due_at, completed_at,
                            skipped_at, skip_reason, created_at, updated_at
                     FROM tasks
-                    WHERE status = 'active'
-                      AND (
-                          planned_date = date('now')
-                          OR date(scheduled_start) = date('now')
-                      )
+                    WHERE planned_date = date('now') 
+                    OR date(scheduled_start) = date('now')
                     ORDER BY
                         scheduled_start IS NULL,
                         scheduled_start,
@@ -351,6 +349,46 @@ public class TaskRepository {
                         rs.getString("start_date"),
                         rs.getString("end_date"),
                         rs.getInt("active") == 1,
+                        rs.getString("created_at"),
+                        rs.getString("updated_at")
+                ))
+                .list();
+    }
+
+    public void linkTag(Long taskId, Long tagId) {
+        jdbcClient.sql("""
+                    INSERT OR IGNORE INTO task_tags (task_id, tag_id)
+                    VALUES (:taskId, :tagId)
+                    """)
+                .param("taskId", taskId)
+                .param("tagId", tagId)
+                .update();
+    }
+
+    public void unlinkTag(Long taskId, Long tagId) {
+        jdbcClient.sql("""
+                    DELETE FROM task_tags
+                    WHERE task_id = :taskId
+                      AND tag_id = :tagId
+                    """)
+                .param("taskId", taskId)
+                .param("tagId", tagId)
+                .update();
+    }
+
+    public List<Tag> findTagsForTask(Long taskId) {
+        return jdbcClient.sql("""
+                    SELECT t.id, t.name, t.color, t.created_at, t.updated_at
+                    FROM tags t
+                    INNER JOIN task_tags tt ON tt.tag_id = t.id
+                    WHERE tt.task_id = :taskId
+                    ORDER BY t.name
+                    """)
+                .param("taskId", taskId)
+                .query((rs, rowNum) -> new Tag(
+                        rs.getLong("id"),
+                        rs.getString("name"),
+                        rs.getString("color"),
                         rs.getString("created_at"),
                         rs.getString("updated_at")
                 ))

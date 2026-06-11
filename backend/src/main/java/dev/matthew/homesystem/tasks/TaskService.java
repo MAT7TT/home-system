@@ -1,6 +1,7 @@
 package dev.matthew.homesystem.tasks;
 
 import dev.matthew.homesystem.routines.Routine;
+import dev.matthew.homesystem.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -62,5 +63,20 @@ public class TaskService {
     public List<Routine> getTaskRoutines(Long taskId) {
         getTask(taskId);
         return taskRepository.findRoutinesForTask(taskId);
+    }
+
+    public void linkTag(Long taskId, Long tagId) {
+        getTask(taskId);
+        taskRepository.linkTag(taskId, tagId);
+    }
+
+    public void unlinkTag(Long taskId, Long tagId) {
+        getTask(taskId);
+        taskRepository.unlinkTag(taskId, tagId);
+    }
+
+    public List<Tag> getTaskTags(Long taskId) {
+        getTask(taskId);
+        return taskRepository.findTagsForTask(taskId);
     }
 }

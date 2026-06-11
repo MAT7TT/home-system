@@ -1,6 +1,7 @@
 package dev.matthew.homesystem.tasks;
 
 import dev.matthew.homesystem.routines.Routine;
+import dev.matthew.homesystem.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -73,5 +74,22 @@ public class TaskController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unlinkRoutine(@PathVariable Long taskId, @PathVariable Long routineId) {
         taskService.unlinkRoutine(taskId, routineId);
+    }
+
+    @GetMapping("/{taskId}/tags")
+    public List<Tag> getTaskTags(@PathVariable Long taskId) {
+        return taskService.getTaskTags(taskId);
+    }
+
+    @PostMapping("/{taskId}/tags/{tagId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void linkTag(@PathVariable Long taskId, @PathVariable Long tagId) {
+        taskService.linkTag(taskId, tagId);
+    }
+
+    @DeleteMapping("/{taskId}/tags/{tagId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unlinkTag(@PathVariable Long taskId, @PathVariable Long tagId) {
+        taskService.unlinkTag(taskId, tagId);
     }
 }

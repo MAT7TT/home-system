@@ -10,6 +10,8 @@ defineProps<{
 
 const emit = defineEmits<{
   complete: [taskId: number]
+  edit: [task: Task]
+  skip: [task: Task]
 }>()
 </script>
 
@@ -27,6 +29,8 @@ const emit = defineEmits<{
         :key="task.id"
         :task="task"
         @complete="emit('complete', $event)"
+        @edit="emit('edit', $event)"
+        @skip="emit('skip', $event)"
       />
     </ul>
   </section>
