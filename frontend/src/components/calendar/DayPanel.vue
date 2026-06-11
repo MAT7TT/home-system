@@ -8,9 +8,9 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  selectTask: [task: Task]
-  'create-task': []
-}>()
+    'select-task': [task: Task]
+    'create-task': [date: Date | null]
+  }>()
 </script>
 
 <template>
@@ -42,17 +42,17 @@ const emit = defineEmits<{
           v-for="task in tasks"
           :key="task.id"
           :task="task"
-          @select="emit('selectTask', $event)"
+          @select="emit('select-task', $event)"
         />
+      </div>
 
-        <button
+      <button
             type="button"
-            class="block w-full truncate rounded-sm bg-primary/10 px-1.5 py-0.5 text-left text-xs text-primary transition hover:bg-primary/20"
-            @click="emit('create-task')"
+            class="mt-4 inline-flex w-full items-center justify-center rounded-md border border-dashed border-muted-foreground/30 bg-background px-3 py-2 text-sm font-medium text-muted-foreground transition hover:border-primary/50 hover:bg-accent hover:text-accent-foreground"
+            @click="emit('create-task', date)"
         >
             Create new task
         </button>
-      </div>
     </div>
   </aside>
 </template>

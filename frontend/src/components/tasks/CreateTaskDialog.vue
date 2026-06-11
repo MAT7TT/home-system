@@ -12,6 +12,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import TaskScheduleFields from '@/components/tasks/TaskScheduleFields.vue'
+import {
+  createEmptyTaskFormValues,
+  createTaskFormSubmitPayload,
+  type TaskFormSubmitPayload,
+  type TaskFormValues,
+} from '@/types/task-form'
 
 const props = defineProps<{
   open: boolean
@@ -20,58 +27,30 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:open': [open: boolean]
-  create: [
-    payload: {
-        title: string
-        notes?: string | null
-        categoryId?: number | null
-        plannedDate?: string | null
-        scheduledStart?: string | null
-        scheduledEnd?: string | null
-        dueAt?: string | null
-    },
-  ]
+  'create-task': [payload: TaskFormSubmitPayload]
 }>()
 
-const title = ref('')
-const notes = ref('')
-const plannedDate = ref('')
-const scheduledStart = ref('')
-const scheduledEnd = ref('')
-const dueAt = ref('')
-const categoryId = ref<number | null>(null)
+const form = ref<TaskFormValues>(createEmptyTaskFormValues())
 
 watch(
   () => props.open,
   (open) => {
     if (open) {
-      title.value = ''
-      notes.value = ''
-      categoryId.value = null
-      plannedDate.value = props.defaultPlannedDate ?? ''
-      scheduledStart.value = ''
-      scheduledEnd.value = ''
-      dueAt.value = ''
+      form.value = createEmptyTaskFormValues({
+        plannedDate: props.defaultPlannedDate ?? '',
+      })
     }
   },
 )
 
 function createTask() {
-  const trimmedTitle = title.value.trim()
+  const payload = createTaskFormSubmitPayload(form.value)
 
-  if (!trimmedTitle) {
+  if (!payload.title) {
     return
   }
 
-  emit('create', {
-    title: trimmedTitle,
-    notes: notes.value.trim() || null,
-    categoryId: categoryId.value,
-    plannedDate: plannedDate.value || null,
-    scheduledStart: scheduledStart.value || null,
-    scheduledEnd: scheduledEnd.value || null,
-    dueAt: dueAt.value || null,
-  })
+  emit('create-task', payload)
 }
 </script>
 
@@ -85,18 +64,21 @@ function createTask() {
       <form class="space-y-4" @submit.prevent="createTask">
         <div class="space-y-2">
           <Label for="new-task-title">Title</Label>
-          <Input id="new-task-title" v-model="title" placeholder="Task title" />
+          <Input id="new-task-title" v-model="form.title" placeholder="Task title" />
         </div>
 
         <div class="space-y-2">
           <Label for="new-task-notes">Notes</Label>
-          <Textarea id="new-task-notes" v-model="notes" rows="4" />
+          <Textarea id="new-task-notes" v-model="form.notes" rows="4" />
         </div>
 
-        <div class="space-y-2">
-          <Label for="new-task-planned-date">Planned date</Label>
-          <Input id="new-task-planned-date" v-model="plannedDate" type="date" />
-        </div>
+        <TaskScheduleFields
+          id-prefix="new-task"
+          v-model:planned-date="form.plannedDate"
+          v-model:scheduled-start="form.scheduledStart"
+          v-model:scheduled-end="form.scheduledEnd"
+          v-model:due-at="form.dueAt"
+        />
 
         <DialogFooter>
           <Button type="button" variant="outline" @click="emit('update:open', false)">

@@ -1,4 +1,4 @@
-import type { CreateTaskRequest, Routine, RoutineProgress, SkipTaskRequest, Task, UpdateTaskRequest } from '@/types/homebase'
+import type { Category, CreateTaskRequest, Routine, RoutineProgress, SkipTaskRequest, Task, UpdateTaskRequest } from '@/types/homebase'
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -14,6 +14,10 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+export function getCategories(): Promise<Category[]> {
+  return request<Category[]>('/api/v1/categories')
 }
 
 export function getTodayTasks(): Promise<Task[]> {

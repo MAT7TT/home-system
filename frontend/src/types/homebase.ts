@@ -1,5 +1,15 @@
 export type TaskStatus = 'active' | 'done' | 'skipped' | 'cancelled'
 
+export interface Category {
+  id: number
+  name: string
+  colour: string | null
+  sortOrder: number
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Task {
   id: number
   title: string

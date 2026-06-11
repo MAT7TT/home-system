@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { getTasks, updateTask, createTask } from '@/api/homebase'
-import EditTaskDialog from '@/components/tasks/EditTaskDialog.vue'
+import { createTask, getCategories, getTasks, updateTask } from '@/api/homebase'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar.vue'
 import DayPanel from '@/components/calendar/DayPanel.vue'
 import MonthCalendar from '@/components/calendar/MonthCalendar.vue'
 import AppShell from '@/components/layout/AppShell.vue'
-import type { Task, UpdateTaskRequest, CreateTaskRequest } from '@/types/homebase'
+import CreateTaskDialog from '@/components/tasks/CreateTaskDialog.vue'
+import EditTaskDialog from '@/components/tasks/EditTaskDialog.vue'
+import type { Category, Task, UpdateTaskRequest } from '@/types/homebase'
+import type { TaskFormSubmitPayload } from '@/types/task-form'
 
 type CalendarMode = 'list' | 'day' | 'week' | 'month'
 
@@ -19,8 +21,10 @@ const createDialogOpen = ref(false)
 const editingTask = ref<Task | null>(null)
 const editDialogOpen = ref(false)
 const tasks = ref<Task[]>([])
+const categories = ref<Category[]>([])
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
+
 const calendarTitle = computed(() => {
   return new Intl.DateTimeFormat('en-GB', {
     month: 'long',
@@ -43,7 +47,13 @@ async function loadCalendar() {
   errorMessage.value = null
 
   try {
-    tasks.value = await getTasks()
+    const [loadedTasks, loadedCategories] = await Promise.all([
+      getTasks(),
+      getCategories(),
+    ])
+
+    tasks.value = loadedTasks
+    categories.value = loadedCategories
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not load calendar'
   } finally {
@@ -100,7 +110,7 @@ function createTaskDialog(date: Date | null) {
   createDialogOpen.value = true
 }
 
-async function handleCreateTask(payload: CreateTaskRequest) {
+async function handleCreateTask(payload: TaskFormSubmitPayload) {
   try {
     await createTask({
       title: payload.title,
@@ -112,6 +122,8 @@ async function handleCreateTask(payload: CreateTaskRequest) {
       dueAt: payload.dueAt,
     })
 
+    createTaskPlannedDate.value = null
+    createDialogOpen.value = false
     await loadCalendar()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not create task'
@@ -123,7 +135,7 @@ function selectTask(task: Task) {
   editDialogOpen.value = true
 }
 
-async function handleSaveTask(payload: UpdateTaskRequest & { id: number }) {
+async function handleSaveTask(payload: TaskFormSubmitPayload & { id: number }) {
   try {
     await updateTask(payload.id, {
       title: payload.title,
@@ -180,10 +192,7 @@ onMounted(() => {
           @select-task="selectTask"
         />
 
-        <section
-          v-else
-          class="rounded-lg border bg-card p-4 text-card-foreground"
-        >
+        <section v-else class="rounded-lg border bg-card p-4 text-card-foreground">
           {{ mode }} view will go here.
         </section>
 
@@ -191,21 +200,23 @@ onMounted(() => {
           :date="selectedDate"
           :tasks="selectedDateTasks"
           @select-task="selectTask"
-          @create="createTaskDialog"
+          @create-task="createTaskDialog"
         />
       </div>
     </div>
 
     <CreateTaskDialog
-        v-model:open="createDialogOpen"
-        :default-planned-date="selectedDate"
-        @create-task="handleCreateTask"
+      v-model:open="createDialogOpen"
+      :default-planned-date="createTaskPlannedDate"
+      :categories="categories"
+      @create-task="handleCreateTask"
     />
 
     <EditTaskDialog
-        v-model:open="editDialogOpen"
-        :task="editingTask"
-        @save="handleSaveTask"
+      v-model:open="editDialogOpen"
+      :task="editingTask"
+      :categories="categories"
+      @save="handleSaveTask"
     />
   </AppShell>
 </template>
