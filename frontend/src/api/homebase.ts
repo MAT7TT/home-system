@@ -13,6 +13,10 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     throw new Error(`Request failed: ${response.status}`)
   }
 
+  if (response.status === 204) {
+    return undefined as T
+  }
+
   return response.json() as Promise<T>
 }
 
@@ -55,6 +59,18 @@ export function skipTask(id: number, payload: SkipTaskRequest): Promise<Task> {
 
 export function completeTask(id: number): Promise<Task> {
   return request<Task>(`/api/v1/tasks/${id}/complete`, {
+    method: 'PATCH',
+  })
+}
+
+export function deleteTask(id: number): Promise<void> {
+  return request<void>(`/api/v1/tasks/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+export function reopenTask(id: number): Promise<Task> {
+  return request<Task>(`/api/v1/tasks/${id}/reopen`, {
     method: 'PATCH',
   })
 }

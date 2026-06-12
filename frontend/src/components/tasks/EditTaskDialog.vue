@@ -32,6 +32,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [open: boolean]
   save: [payload: TaskFormSubmitPayload & { id: number }]
+  delete: [id: number]
 }>()
 
 const form = ref<TaskFormValues>(createEmptyTaskFormValues())
@@ -59,6 +60,14 @@ function saveTask() {
     id: props.task.id,
     ...payload,
   })
+}
+
+function deleteTask() {
+  if (!props.task) {
+    return
+  }
+
+  emit('delete', props.task.id)
 }
 </script>
 
@@ -95,6 +104,9 @@ function saveTask() {
         />
 
         <DialogFooter>
+          <Button type="button" variant="destructive" @click="deleteTask">
+            Delete
+          </Button>
           <Button type="button" variant="outline" @click="emit('update:open', false)">
             Cancel
           </Button>

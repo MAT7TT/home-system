@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { createTask, getCategories, getTasks, updateTask } from '@/api/homebase'
+import { createTask, getCategories, getTasks, updateTask, deleteTask } from '@/api/homebase'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar.vue'
 import DayPanel from '@/components/calendar/DayPanel.vue'
 import MonthCalendar from '@/components/calendar/MonthCalendar.vue'
@@ -155,6 +155,18 @@ async function handleSaveTask(payload: TaskFormSubmitPayload & { id: number }) {
   }
 }
 
+async function handleDeleteTask(id: number) {
+  try {
+    await deleteTask(id)
+
+    editDialogOpen.value = false
+    editingTask.value = null
+    await loadCalendar()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Could not delete task'
+  }
+}
+
 onMounted(() => {
   loadCalendar()
 })
@@ -217,6 +229,7 @@ onMounted(() => {
       :task="editingTask"
       :categories="categories"
       @save="handleSaveTask"
+      @delete="handleDeleteTask"
     />
   </AppShell>
 </template>

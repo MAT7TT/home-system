@@ -12,6 +12,7 @@ const emit = defineEmits<{
   complete: [taskId: number]
   edit: [task: Task]
   skip: [task: Task]
+  reopen: [taskId: number]
 }>()
 </script>
 
@@ -31,6 +32,7 @@ const emit = defineEmits<{
         @complete="emit('complete', $event)"
         @edit="emit('edit', $event)"
         @skip="emit('skip', $event)"
+        @reopen="emit('reopen', $event)"
       />
     </ul>
   </section>

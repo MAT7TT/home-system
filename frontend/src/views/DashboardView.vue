@@ -4,10 +4,13 @@ import { onMounted, ref } from 'vue'
 import {
   completeTask,
   createTask,
+  deleteTask,
   getActiveTasks,
+  getCategories,
   getRoutines,
   getRoutineProgress,
   getTodayTasks,
+  reopenTask,
   skipTask,
   updateTask,
 } from '@/api/homebase'
@@ -17,11 +20,13 @@ import EditTaskDialog from '@/components/tasks/EditTaskDialog.vue'
 import QuickAddTask from '@/components/tasks/QuickAddTask.vue'
 import SkipTaskDialog from '@/components/tasks/SkipTaskDialog.vue'
 import TaskList from '@/components/tasks/TaskList.vue'
-import type { RoutineProgress, Task, UpdateTaskRequest } from '@/types/homebase'
+import type { Category, RoutineProgress, Task } from '@/types/homebase'
+import type { TaskFormSubmitPayload } from '@/types/task-form'
 
 const todayTasks = ref<Task[]>([])
 const activeTasks = ref<Task[]>([])
 const routineProgress = ref<RoutineProgress[]>([])
+const categories = ref<Category[]>([])
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 
@@ -36,14 +41,16 @@ async function loadDashboard() {
   errorMessage.value = null
 
   try {
-    const [today, active, routines] = await Promise.all([
+    const [today, active, routines, loadedCategories] = await Promise.all([
       getTodayTasks(),
       getActiveTasks(),
       getRoutines(),
+      getCategories(),
     ])
 
     todayTasks.value = today
     activeTasks.value = active
+    categories.value = loadedCategories
 
     routineProgress.value = await Promise.all(
       routines.map((routine) => getRoutineProgress(routine.id)),
@@ -61,6 +68,15 @@ async function handleCompleteTask(taskId: number) {
     await loadDashboard()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not complete task'
+  }
+}
+
+async function handleReopenTask(taskId: number) {
+  try {
+    await reopenTask(taskId)
+    await loadDashboard()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Could not reopen task'
   }
 }
 
@@ -82,7 +98,7 @@ function handleEditTask(task: Task) {
   editDialogOpen.value = true
 }
 
-async function handleSaveTask(payload: UpdateTaskRequest & { id: number }) {
+async function handleSaveTask(payload: TaskFormSubmitPayload & { id: number }) {
   try {
     await updateTask(payload.id, {
       title: payload.title,
@@ -121,6 +137,18 @@ async function handleSkipTask(payload: { id: number; reason: string | null }) {
   }
 }
 
+async function handleDeleteTask(id: number) {
+  try {
+    await deleteTask(id)
+
+    editDialogOpen.value = false
+    editingTask.value = null
+    await loadDashboard()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Could not delete task'
+  }
+}
+
 onMounted(() => {
   loadDashboard()
 })
@@ -149,6 +177,7 @@ onMounted(() => {
             empty-text="Nothing planned for today."
             :tasks="todayTasks"
             @complete="handleCompleteTask"
+            @reopen="handleReopenTask"
             @edit="handleEditTask"
             @skip="handleOpenSkipTask"
           />
@@ -158,6 +187,7 @@ onMounted(() => {
             empty-text="No active tasks."
             :tasks="activeTasks"
             @complete="handleCompleteTask"
+            @reopen="handleReopenTask"
             @edit="handleEditTask"
             @skip="handleOpenSkipTask"
           />
@@ -169,7 +199,9 @@ onMounted(() => {
       <EditTaskDialog
         v-model:open="editDialogOpen"
         :task="editingTask"
+        :categories="categories"
         @save="handleSaveTask"
+        @delete="handleDeleteTask"
       />
 
       <SkipTaskDialog

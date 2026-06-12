@@ -59,6 +59,17 @@ public class TaskController {
         return taskService.skipTask(id, request);
     }
 
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTask(@PathVariable Long id) {
+        taskService.deleteTask(id);
+    }
+
+    @PatchMapping("/{id}/reopen")
+    public Task reopenTask(@PathVariable Long id) {
+        return taskService.reopenTask(id);
+    }
+
     @PostMapping("/{taskId}/routines/{routineId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void linkRoutine(@PathVariable Long taskId, @PathVariable Long routineId) {

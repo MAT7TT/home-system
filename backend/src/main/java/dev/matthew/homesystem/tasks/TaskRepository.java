@@ -305,6 +305,48 @@ public class TaskRepository {
                 .single();
     }
 
+    public void delete(Long id) {
+        jdbcClient.sql("""
+                DELETE FROM tasks
+                WHERE id = :id
+                """)
+            .param("id", id)
+            .update();
+    }
+
+    public Task reopen(Long id) {
+        return jdbcClient.sql("""
+                UPDATE tasks
+                SET status = 'active',
+                    completed_at = NULL,
+                    skipped_at = NULL,
+                    skip_reason = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = :id
+                RETURNING id, title, notes, status, category_id, planned_date,
+                          scheduled_start, scheduled_end, due_at, completed_at,
+                          skipped_at, skip_reason, created_at, updated_at
+                """)
+                .param("id", id)
+                .query((rs, rowNum) -> new Task(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("notes"),
+                        rs.getString("status"),
+                        getNullableLong(rs, "category_id"),
+                        rs.getString("planned_date"),
+                        rs.getString("scheduled_start"),
+                        rs.getString("scheduled_end"),
+                        rs.getString("due_at"),
+                        rs.getString("completed_at"),
+                        rs.getString("skipped_at"),
+                        rs.getString("skip_reason"),
+                        rs.getString("created_at"),
+                        rs.getString("updated_at")
+                ))
+                .single();
+    }
+
     public void linkRoutine(Long taskId, Long routineId) {
         jdbcClient.sql("""
                     INSERT OR IGNORE INTO task_routines (task_id, routine_id)

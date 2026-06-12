@@ -50,6 +50,16 @@ public class TaskService {
         return taskRepository.skip(id, request);
     }
 
+    public void deleteTask(Long id) {
+        getTask(id);
+        taskRepository.delete(id);
+    }
+
+    public Task reopenTask(Long id) {
+        getTask(id);
+        return taskRepository.reopen(id);
+    }
+
     public void linkRoutine(Long taskId, Long routineId) {
         getTask(taskId);
         taskRepository.linkRoutine(taskId, routineId);

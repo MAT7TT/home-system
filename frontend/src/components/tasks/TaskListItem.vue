@@ -13,11 +13,23 @@ const emit = defineEmits<{
   complete: [taskId: number]
   edit: [task: Task]
   skip: [task: Task]
+  reopen: [taskId: number]
 }>()
 
 const isDone = computed(() => props.task.status === 'done')
 const isSkipped = computed(() => props.task.status === 'skipped')
 const isActive = computed(() => props.task.status === 'active')
+
+function toggleDone() {
+  if (isDone.value) {
+    emit('reopen', props.task.id)
+    return
+  }
+
+  if (isActive.value) {
+    emit('complete', props.task.id)
+  }
+}
 </script>
 
 <template>
@@ -29,8 +41,8 @@ const isActive = computed(() => props.task.status === 'active')
   >
     <Checkbox
       :model-value="isDone"
-      :disabled="isDone || isSkipped"
-      @update:model-value="emit('complete', task.id)"
+      :disabled="isSkipped"
+      @update:model-value="toggleDone"
     />
 
     <div class="min-w-0 flex-1">
@@ -61,6 +73,16 @@ const isActive = computed(() => props.task.status === 'active')
         @click="emit('skip', task)"
       >
         Skip
+      </Button>
+
+      <Button
+        v-if="isSkipped"
+        type="button"
+        variant="ghost"
+        size="sm"
+        @click="emit('reopen', task.id)"
+      >
+        Reopen
       </Button>
     </div>
   </li>
