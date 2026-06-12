@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { CalendarDays, Clock3 } from '@lucide/vue'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,7 +22,6 @@ const emit = defineEmits<{
 }>()
 
 const isTimeBlock = computed(() => Boolean(props.scheduledStart || props.scheduledEnd))
-
 const startTime = computed(() => getTimeFromDateTime(props.scheduledStart))
 const endTime = computed(() => getTimeFromDateTime(props.scheduledEnd))
 
@@ -105,67 +105,85 @@ function setEndTime(value: string | number) {
 </script>
 
 <template>
-  <section class="space-y-4 rounded-md border p-4">
-    <div class="space-y-2">
-      <Label :for="`${idPrefix}-planned-date`">Planned date</Label>
-      <Input
-        :id="`${idPrefix}-planned-date`"
-        :model-value="plannedDate"
-        type="date"
-        @update:model-value="setPlannedDate"
-      />
-    </div>
-
-    <div class="flex rounded-md border bg-muted p-1">
-      <Button
-        type="button"
-        class="flex-1"
-        :variant="isTimeBlock ? 'ghost' : 'secondary'"
-        @click="setAllDay"
-      >
-        All day
-      </Button>
-
-      <Button
-        type="button"
-        class="flex-1"
-        :variant="isTimeBlock ? 'secondary' : 'ghost'"
-        @click="setTimeBlock"
-      >
-        Time block
-      </Button>
-    </div>
-
-    <div v-if="isTimeBlock" class="grid gap-4 sm:grid-cols-2">
-      <div class="space-y-2">
-        <Label :for="`${idPrefix}-start-time`">Start time</Label>
-        <Input
-          :id="`${idPrefix}-start-time`"
-          :model-value="startTime"
-          type="time"
-          @update:model-value="setStartTime"
-        />
+  <section class="rounded-lg border bg-card text-card-foreground shadow-xs">
+    <div class="flex items-center gap-3 border-b px-4 py-3">
+      <div class="flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <CalendarDays class="size-4" />
       </div>
 
-      <div class="space-y-2">
-        <Label :for="`${idPrefix}-end-time`">End time</Label>
-        <Input
-          :id="`${idPrefix}-end-time`"
-          :model-value="endTime"
-          type="time"
-          @update:model-value="setEndTime"
-        />
+      <div>
+        <h3 class="text-sm font-medium">Schedule</h3>
+        <p class="text-xs text-muted-foreground">Date, time block and due point</p>
       </div>
     </div>
 
-    <div class="space-y-2">
-      <Label :for="`${idPrefix}-due-at`">Due date/time</Label>
-      <Input
-        :id="`${idPrefix}-due-at`"
-        :model-value="dueAt"
-        type="datetime-local"
-        @update:model-value="emit('update:dueAt', toInputValue($event))"
-      />
+    <div class="space-y-4 p-4">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-2">
+          <Label :for="`${idPrefix}-planned-date`">Planned date</Label>
+          <Input
+            :id="`${idPrefix}-planned-date`"
+            :model-value="plannedDate"
+            type="date"
+            @update:model-value="setPlannedDate"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <Label :for="`${idPrefix}-due-at`">Due date/time</Label>
+          <Input
+            :id="`${idPrefix}-due-at`"
+            :model-value="dueAt"
+            type="datetime-local"
+            @update:model-value="emit('update:dueAt', toInputValue($event))"
+          />
+        </div>
+      </div>
+
+      <div class="rounded-md border bg-muted/40 p-1">
+        <div class="grid grid-cols-2 gap-1">
+          <Button
+            type="button"
+            size="sm"
+            :variant="isTimeBlock ? 'ghost' : 'secondary'"
+            @click="setAllDay"
+          >
+            All day
+          </Button>
+
+          <Button
+            type="button"
+            size="sm"
+            :variant="isTimeBlock ? 'secondary' : 'ghost'"
+            @click="setTimeBlock"
+          >
+            <Clock3 class="size-4" />
+            Time block
+          </Button>
+        </div>
+      </div>
+
+      <div v-if="isTimeBlock" class="grid gap-4 sm:grid-cols-2">
+        <div class="space-y-2">
+          <Label :for="`${idPrefix}-start-time`">Start time</Label>
+          <Input
+            :id="`${idPrefix}-start-time`"
+            :model-value="startTime"
+            type="time"
+            @update:model-value="setStartTime"
+          />
+        </div>
+
+        <div class="space-y-2">
+          <Label :for="`${idPrefix}-end-time`">End time</Label>
+          <Input
+            :id="`${idPrefix}-end-time`"
+            :model-value="endTime"
+            type="time"
+            @update:model-value="setEndTime"
+          />
+        </div>
+      </div>
     </div>
   </section>
 </template>

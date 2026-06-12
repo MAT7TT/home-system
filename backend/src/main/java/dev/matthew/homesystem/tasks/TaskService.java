@@ -4,6 +4,7 @@ import dev.matthew.homesystem.routines.Routine;
 import dev.matthew.homesystem.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -34,12 +35,31 @@ public class TaskService {
         return taskRepository.findToday();
     }
 
+    @Transactional
     public Task createTask(CreateTaskRequest request) {
-        return taskRepository.create(request);
+        Task task = taskRepository.create(request);
+
+        taskRepository.replaceTags(task.id(), safeIds(request.tagIds()));
+        taskRepository.replaceRoutines(task.id(), safeIds(request.routineIds()));
+
+        return task;
     }
 
+    @Transactional
     public Task updateTask(Long id, UpdateTaskRequest request) {
-        return taskRepository.update(id, request);
+        getTask(id);
+
+        Task task = taskRepository.update(id, request);
+
+        if (request.tagIds() != null) {
+            taskRepository.replaceTags(id, request.tagIds());
+        }
+
+        if (request.routineIds() != null) {
+            taskRepository.replaceRoutines(id, request.routineIds());
+        }
+
+        return task;
     }
 
     public Task completeTask(Long id) {
@@ -88,5 +108,9 @@ public class TaskService {
     public List<Tag> getTaskTags(Long taskId) {
         getTask(taskId);
         return taskRepository.findTagsForTask(taskId);
+    }
+
+    private List<Long> safeIds(List<Long> ids) {
+        return ids == null ? List.of() : ids;
     }
 }

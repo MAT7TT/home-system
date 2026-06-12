@@ -437,6 +437,32 @@ public class TaskRepository {
                 .list();
     }
 
+    public void replaceTags(Long taskId, List<Long> tagIds) {
+        jdbcClient.sql("""
+                DELETE FROM task_tags
+                WHERE task_id = :taskId
+                """)
+                .param("taskId", taskId)
+                .update();
+
+        for (Long tagId : tagIds) {
+            linkTag(taskId, tagId);
+        }
+    }
+
+    public void replaceRoutines(Long taskId, List<Long> routineIds) {
+        jdbcClient.sql("""
+                DELETE FROM task_routines
+                WHERE task_id = :taskId
+                """)
+                .param("taskId", taskId)
+                .update();
+
+        for (Long routineId : routineIds) {
+            linkRoutine(taskId, routineId);
+        }
+    }
+
     private Long getNullableLong(java.sql.ResultSet rs, String columnName) throws java.sql.SQLException {
         long value = rs.getLong(columnName);
         return rs.wasNull() ? null : value;

@@ -47,7 +47,10 @@ export function createEmptyTaskFormValues(
   }
 }
 
-export function createTaskFormValuesFromTask(task: Task): TaskFormValues {
+export function createTaskFormValuesFromTask(
+  task: Task,
+  links: { tagIds?: number[]; routineIds?: number[] } = {},
+): TaskFormValues {
   return {
     title: task.title,
     notes: task.notes ?? '',
@@ -56,8 +59,8 @@ export function createTaskFormValuesFromTask(task: Task): TaskFormValues {
     scheduledEnd: task.scheduledEnd ?? '',
     dueAt: task.dueAt ?? '',
     categoryId: task.categoryId,
-    tagIds: [],
-    routineIds: [],
+    tagIds: links.tagIds ?? [],
+    routineIds: links.routineIds ?? [],
   }
 }
 

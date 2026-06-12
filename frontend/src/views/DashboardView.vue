@@ -9,6 +9,9 @@ import {
   getCategories,
   getRoutines,
   getRoutineProgress,
+  getTags,
+  getTaskRoutines,
+  getTaskTags,
   getTodayTasks,
   reopenTask,
   skipTask,
@@ -20,18 +23,22 @@ import EditTaskDialog from '@/components/tasks/EditTaskDialog.vue'
 import QuickAddTask from '@/components/tasks/QuickAddTask.vue'
 import SkipTaskDialog from '@/components/tasks/SkipTaskDialog.vue'
 import TaskList from '@/components/tasks/TaskList.vue'
-import type { Category, RoutineProgress, Task } from '@/types/homebase'
+import type { Category, Routine, RoutineProgress, Tag, Task } from '@/types/homebase'
 import type { TaskFormSubmitPayload } from '@/types/task-form'
 
 const todayTasks = ref<Task[]>([])
 const activeTasks = ref<Task[]>([])
 const routineProgress = ref<RoutineProgress[]>([])
 const categories = ref<Category[]>([])
+const tags = ref<Tag[]>([])
+const routines = ref<Routine[]>([])
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 
 const editingTask = ref<Task | null>(null)
 const editDialogOpen = ref(false)
+const selectedTagIds = ref<number[]>([])
+const selectedRoutineIds = ref<number[]>([])
 
 const skippingTask = ref<Task | null>(null)
 const skipDialogOpen = ref(false)
@@ -41,19 +48,23 @@ async function loadDashboard() {
   errorMessage.value = null
 
   try {
-    const [today, active, routines, loadedCategories] = await Promise.all([
-      getTodayTasks(),
-      getActiveTasks(),
-      getRoutines(),
-      getCategories(),
-    ])
+    const [today, active, loadedRoutines, loadedCategories, loadedTags] =
+      await Promise.all([
+        getTodayTasks(),
+        getActiveTasks(),
+        getRoutines(),
+        getCategories(),
+        getTags(),
+      ])
 
     todayTasks.value = today
     activeTasks.value = active
+    routines.value = loadedRoutines
     categories.value = loadedCategories
+    tags.value = loadedTags
 
     routineProgress.value = await Promise.all(
-      routines.map((routine) => getRoutineProgress(routine.id)),
+      loadedRoutines.map((routine) => getRoutineProgress(routine.id)),
     )
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Something went wrong'
@@ -93,9 +104,24 @@ async function handleCreateTask(payload: { title: string; plannedDate: string | 
   }
 }
 
-function handleEditTask(task: Task) {
+async function handleEditTask(task: Task) {
   editingTask.value = task
   editDialogOpen.value = true
+  selectedTagIds.value = []
+  selectedRoutineIds.value = []
+
+  try {
+    const [taskTags, taskRoutines] = await Promise.all([
+      getTaskTags(task.id),
+      getTaskRoutines(task.id),
+    ])
+
+    selectedTagIds.value = taskTags.map((tag) => tag.id)
+    selectedRoutineIds.value = taskRoutines.map((routine) => routine.id)
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Could not load task links'
+  }
 }
 
 async function handleSaveTask(payload: TaskFormSubmitPayload & { id: number }) {
@@ -108,10 +134,14 @@ async function handleSaveTask(payload: TaskFormSubmitPayload & { id: number }) {
       scheduledStart: payload.scheduledStart,
       scheduledEnd: payload.scheduledEnd,
       dueAt: payload.dueAt,
+      tagIds: payload.tagIds,
+      routineIds: payload.routineIds,
     })
 
     editDialogOpen.value = false
     editingTask.value = null
+    selectedTagIds.value = []
+    selectedRoutineIds.value = []
     await loadDashboard()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not update task'
@@ -143,6 +173,8 @@ async function handleDeleteTask(id: number) {
 
     editDialogOpen.value = false
     editingTask.value = null
+    selectedTagIds.value = []
+    selectedRoutineIds.value = []
     await loadDashboard()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not delete task'
@@ -200,6 +232,10 @@ onMounted(() => {
         v-model:open="editDialogOpen"
         :task="editingTask"
         :categories="categories"
+        :tags="tags"
+        :routines="routines"
+        :selected-tag-ids="selectedTagIds"
+        :selected-routine-ids="selectedRoutineIds"
         @save="handleSaveTask"
         @delete="handleDeleteTask"
       />

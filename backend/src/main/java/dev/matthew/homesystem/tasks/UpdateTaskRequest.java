@@ -3,6 +3,8 @@ package dev.matthew.homesystem.tasks;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public record UpdateTaskRequest(
         @NotBlank
         @Size(max = 200)
@@ -12,6 +14,8 @@ public record UpdateTaskRequest(
         String plannedDate,
         String scheduledStart,
         String scheduledEnd,
-        String dueAt
+        String dueAt,
+        List<Long> tagIds,
+        List<Long> routineIds
 ) {
 }

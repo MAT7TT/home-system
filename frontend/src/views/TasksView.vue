@@ -7,6 +7,10 @@ import {
   createTask,
   deleteTask,
   getCategories,
+  getRoutines,
+  getTags,
+  getTaskRoutines,
+  getTaskTags,
   getTasks,
   reopenTask,
   skipTask,
@@ -21,11 +25,13 @@ import TaskManagementItem from '@/components/tasks/TaskManagementItem.vue'
 import TaskManagementStats from '@/components/tasks/TaskManagementStats.vue'
 import TaskManagementToolbar from '@/components/tasks/TaskManagementToolbar.vue'
 import type { TaskStatusFilter } from '@/types/task-filters'
-import type { Category, Task } from '@/types/homebase'
+import type { Category, Routine, Tag, Task } from '@/types/homebase'
 import type { TaskFormSubmitPayload } from '@/types/task-form'
 
 const tasks = ref<Task[]>([])
 const categories = ref<Category[]>([])
+const tags = ref<Tag[]>([])
+const routines = ref<Routine[]>([])
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 
@@ -36,6 +42,8 @@ const createDialogOpen = ref(false)
 
 const editingTask = ref<Task | null>(null)
 const editDialogOpen = ref(false)
+const selectedTagIds = ref<number[]>([])
+const selectedRoutineIds = ref<number[]>([])
 
 const skippingTask = ref<Task | null>(null)
 const skipDialogOpen = ref(false)
@@ -77,13 +85,18 @@ async function loadTasksPage() {
   errorMessage.value = null
 
   try {
-    const [loadedTasks, loadedCategories] = await Promise.all([
-      getTasks(),
-      getCategories(),
-    ])
+    const [loadedTasks, loadedCategories, loadedTags, loadedRoutines] =
+      await Promise.all([
+        getTasks(),
+        getCategories(),
+        getTags(),
+        getRoutines(),
+      ])
 
     tasks.value = loadedTasks
     categories.value = loadedCategories
+    tags.value = loadedTags
+    routines.value = loadedRoutines
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not load tasks'
   } finally {
@@ -101,6 +114,8 @@ async function handleCreateTask(payload: TaskFormSubmitPayload) {
       scheduledStart: payload.scheduledStart,
       scheduledEnd: payload.scheduledEnd,
       dueAt: payload.dueAt,
+      tagIds: payload.tagIds,
+      routineIds: payload.routineIds,
     })
 
     createDialogOpen.value = false
@@ -110,9 +125,24 @@ async function handleCreateTask(payload: TaskFormSubmitPayload) {
   }
 }
 
-function handleEditTask(task: Task) {
+async function handleEditTask(task: Task) {
   editingTask.value = task
   editDialogOpen.value = true
+  selectedTagIds.value = []
+  selectedRoutineIds.value = []
+
+  try {
+    const [taskTags, taskRoutines] = await Promise.all([
+      getTaskTags(task.id),
+      getTaskRoutines(task.id),
+    ])
+
+    selectedTagIds.value = taskTags.map((tag) => tag.id)
+    selectedRoutineIds.value = taskRoutines.map((routine) => routine.id)
+  } catch (error) {
+    errorMessage.value =
+      error instanceof Error ? error.message : 'Could not load task links'
+  }
 }
 
 async function handleSaveTask(payload: TaskFormSubmitPayload & { id: number }) {
@@ -125,10 +155,14 @@ async function handleSaveTask(payload: TaskFormSubmitPayload & { id: number }) {
       scheduledStart: payload.scheduledStart,
       scheduledEnd: payload.scheduledEnd,
       dueAt: payload.dueAt,
+      tagIds: payload.tagIds,
+      routineIds: payload.routineIds,
     })
 
     editDialogOpen.value = false
     editingTask.value = null
+    selectedTagIds.value = []
+    selectedRoutineIds.value = []
     await loadTasksPage()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not update task'
@@ -141,6 +175,8 @@ async function handleDeleteTask(taskId: number) {
 
     editDialogOpen.value = false
     editingTask.value = null
+    selectedTagIds.value = []
+    selectedRoutineIds.value = []
     await loadTasksPage()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'Could not delete task'
@@ -262,6 +298,8 @@ onMounted(() => {
         v-model:open="createDialogOpen"
         :default-planned-date="null"
         :categories="categories"
+        :tags="tags"
+        :routines="routines"
         @create-task="handleCreateTask"
       />
 
@@ -269,6 +307,10 @@ onMounted(() => {
         v-model:open="editDialogOpen"
         :task="editingTask"
         :categories="categories"
+        :tags="tags"
+        :routines="routines"
+        :selected-tag-ids="selectedTagIds"
+        :selected-routine-ids="selectedRoutineIds"
         @save="handleSaveTask"
         @delete="handleDeleteTask"
       />

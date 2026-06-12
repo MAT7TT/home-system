@@ -10,6 +10,14 @@ export interface Category {
   updatedAt: string
 }
 
+export interface Tag {
+  id: number
+  name: string
+  color: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Task {
   id: number
   title: string
@@ -61,6 +69,8 @@ export interface CreateTaskRequest {
   scheduledStart?: string | null
   scheduledEnd?: string | null
   dueAt?: string | null
+  tagIds?: number[]
+  routineIds?: number[]
 }
 
 export interface UpdateTaskRequest {
@@ -71,6 +81,8 @@ export interface UpdateTaskRequest {
   scheduledStart?: string | null
   scheduledEnd?: string | null
   dueAt?: string | null
+  tagIds?: number[]
+  routineIds?: number[]
 }
 
 export interface SkipTaskRequest {
